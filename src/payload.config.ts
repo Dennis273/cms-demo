@@ -7,8 +7,20 @@ import { CloudflareContext, getCloudflareContext } from '@opennextjs/cloudflare'
 import { GetPlatformProxyOptions } from 'wrangler'
 import { r2Storage } from '@payloadcms/storage-r2'
 
+// Collections
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
+import { Plans } from './collections/Plans'
+import { DocCategories } from './collections/DocCategories'
+import { Docs } from './collections/Docs'
+import { Showcases } from './collections/Showcases'
+import { Testimonials } from './collections/Testimonials'
+
+// Globals
+import { HomePage } from './globals/HomePage'
+import { Navigation } from './globals/Navigation'
+import { Footer } from './globals/Footer'
+import { SiteSettings } from './globals/SiteSettings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -28,7 +40,42 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media],
+  // Collections
+  collections: [
+    Users,
+    Media,
+    Plans,
+    DocCategories,
+    Docs,
+    Showcases,
+    Testimonials,
+  ],
+  // Globals
+  globals: [
+    HomePage,
+    Navigation,
+    Footer,
+    SiteSettings,
+  ],
+  // Localization
+  localization: {
+    locales: [
+      {
+        label: '简体中文',
+        code: 'zh',
+      },
+      {
+        label: 'English',
+        code: 'en',
+      },
+      {
+        label: '日本語',
+        code: 'ja',
+      },
+    ],
+    defaultLocale: 'zh',
+    fallback: true,
+  },
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
