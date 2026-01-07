@@ -1,9 +1,7 @@
-'use client'
-
-import { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical'
+// 服务端组件 - 不需要 'use client'
 
 interface RichTextProps {
-  content: SerializedEditorState | null | undefined
+  content: any
   className?: string
 }
 

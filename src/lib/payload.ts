@@ -1,3 +1,4 @@
+// 服务端专用 - 只在服务端组件中导入
 import { getPayload as getPayloadBase } from 'payload'
 import config from '@/payload.config'
 
@@ -6,28 +7,5 @@ export async function getPayload() {
   return getPayloadBase({ config: payloadConfig })
 }
 
-export type Locale = 'zh' | 'en' | 'ja'
-
-export const locales: Locale[] = ['zh', 'en', 'ja']
-
-export const localeNames: Record<Locale, string> = {
-  zh: '简体中文',
-  en: 'English',
-  ja: '日本語',
-}
-
-export const currencySymbols: Record<string, string> = {
-  USD: '$',
-  CNY: '¥',
-  JPY: '¥',
-}
-
-export const localeToCurrency: Record<Locale, string> = {
-  zh: 'CNY',
-  en: 'USD',
-  ja: 'JPY',
-}
-
-export function isValidLocale(locale: string): locale is Locale {
-  return locales.includes(locale as Locale)
-}
+// 重新导出 i18n 工具（方便服务端组件使用）
+export * from './i18n'

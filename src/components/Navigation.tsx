@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Locale, localeNames, locales } from '@/lib/payload'
+import { Locale, locales } from '@/lib/i18n'
 
 interface NavItem {
   label: string

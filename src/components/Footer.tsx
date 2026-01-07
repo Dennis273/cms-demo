@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Locale } from '@/lib/payload'
+import { Locale } from '@/lib/i18n'
 
 interface FooterLink {
   label: string
