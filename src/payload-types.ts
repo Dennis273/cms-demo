@@ -680,9 +680,23 @@ export interface Navigation {
   items?:
     | {
         label: string;
-        link: string;
+        /**
+         * Leave empty if this item has sub-menu
+         */
+        link?: string | null;
         openInNewTab?: boolean | null;
         highlight?: boolean | null;
+        /**
+         * Add sub-menu items for dropdown
+         */
+        children?:
+          | {
+              label: string;
+              link: string;
+              openInNewTab?: boolean | null;
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
@@ -828,6 +842,14 @@ export interface NavigationSelect<T extends boolean = true> {
         link?: T;
         openInNewTab?: T;
         highlight?: T;
+        children?:
+          | T
+          | {
+              label?: T;
+              link?: T;
+              openInNewTab?: T;
+              id?: T;
+            };
         id?: T;
       };
   updatedAt?: T;
