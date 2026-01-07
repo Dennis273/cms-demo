@@ -3,6 +3,8 @@ import Image from 'next/image'
 import { getPayload, Locale, localeToCurrency, currencySymbols, isValidLocale } from '@/lib/payload'
 import { notFound } from 'next/navigation'
 
+export const dynamic = 'force-dynamic'
+
 interface PageProps {
   params: Promise<{ locale: string }>
 }
