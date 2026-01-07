@@ -125,7 +125,7 @@ export default async function ShowcasePage({ params }: PageProps) {
                     {'★'.repeat(testimonial.rating)}
                     {'☆'.repeat(5 - testimonial.rating)}
                   </div>
-                  <p className="testimonial-content">"{testimonial.content}"</p>
+                  <p className="testimonial-content">&ldquo;{testimonial.content}&rdquo;</p>
                   <div className="testimonial-author">
                     {typeof testimonial.avatar === 'object' && testimonial.avatar?.url && (
                       <Image
