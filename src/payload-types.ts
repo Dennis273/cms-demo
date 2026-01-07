@@ -102,12 +102,18 @@ export interface Config {
     navigation: Navigation;
     footer: Footer;
     'site-settings': SiteSetting;
+    'plans-page': PlansPage;
+    'docs-page': DocsPage;
+    'showcase-page': ShowcasePage;
   };
   globalsSelect: {
     'home-page': HomePageSelect<false> | HomePageSelect<true>;
     navigation: NavigationSelect<false> | NavigationSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    'plans-page': PlansPageSelect<false> | PlansPageSelect<true>;
+    'docs-page': DocsPageSelect<false> | DocsPageSelect<true>;
+    'showcase-page': ShowcasePageSelect<false> | ShowcasePageSelect<true>;
   };
   locale: 'zh' | 'en' | 'ja';
   user: User & {
@@ -283,6 +289,10 @@ export interface Doc {
    * Order within category, lower numbers appear first
    */
   order?: number | null;
+  seo?: {
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -316,6 +326,10 @@ export interface Showcase {
    */
   website?: string | null;
   order?: number | null;
+  seo?: {
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -539,6 +553,12 @@ export interface DocsSelect<T extends boolean = true> {
   excerpt?: T;
   content?: T;
   order?: T;
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -554,6 +574,12 @@ export interface ShowcasesSelect<T extends boolean = true> {
   description?: T;
   website?: T;
   order?: T;
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -660,8 +686,36 @@ export interface HomePage {
       }[]
     | null;
   seo?: {
+    /**
+     * Title for search engines. Recommended: 50-60 characters.
+     */
     metaTitle?: string | null;
+    /**
+     * Description for search engines. Recommended: 150-160 characters.
+     */
     metaDescription?: string | null;
+    /**
+     * Image for social media sharing. Recommended: 1200x630 pixels.
+     */
+    ogImage?: (number | null) | Media;
+    /**
+     * Override the default canonical URL if needed.
+     */
+    canonicalURL?: string | null;
+    /**
+     * Prevent search engines from indexing this page.
+     */
+    noIndex?: boolean | null;
+    /**
+     * Add FAQ items for Google FAQ Rich Results.
+     */
+    faq?:
+      | {
+          question: string;
+          answer: string;
+          id?: string | null;
+        }[]
+      | null;
   };
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -760,6 +814,135 @@ export interface SiteSetting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "plans-page".
+ */
+export interface PlansPage {
+  id: number;
+  title: string;
+  subtitle?: string | null;
+  seo?: {
+    /**
+     * Title for search engines. Recommended: 50-60 characters.
+     */
+    metaTitle?: string | null;
+    /**
+     * Description for search engines. Recommended: 150-160 characters.
+     */
+    metaDescription?: string | null;
+    /**
+     * Image for social media sharing. Recommended: 1200x630 pixels.
+     */
+    ogImage?: (number | null) | Media;
+    /**
+     * Override the default canonical URL if needed.
+     */
+    canonicalURL?: string | null;
+    /**
+     * Prevent search engines from indexing this page.
+     */
+    noIndex?: boolean | null;
+    /**
+     * Add FAQ items for Google FAQ Rich Results.
+     */
+    faq?:
+      | {
+          question: string;
+          answer: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "docs-page".
+ */
+export interface DocsPage {
+  id: number;
+  title: string;
+  subtitle?: string | null;
+  seo?: {
+    /**
+     * Title for search engines. Recommended: 50-60 characters.
+     */
+    metaTitle?: string | null;
+    /**
+     * Description for search engines. Recommended: 150-160 characters.
+     */
+    metaDescription?: string | null;
+    /**
+     * Image for social media sharing. Recommended: 1200x630 pixels.
+     */
+    ogImage?: (number | null) | Media;
+    /**
+     * Override the default canonical URL if needed.
+     */
+    canonicalURL?: string | null;
+    /**
+     * Prevent search engines from indexing this page.
+     */
+    noIndex?: boolean | null;
+    /**
+     * Add FAQ items for Google FAQ Rich Results.
+     */
+    faq?:
+      | {
+          question: string;
+          answer: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "showcase-page".
+ */
+export interface ShowcasePage {
+  id: number;
+  title: string;
+  subtitle?: string | null;
+  seo?: {
+    /**
+     * Title for search engines. Recommended: 50-60 characters.
+     */
+    metaTitle?: string | null;
+    /**
+     * Description for search engines. Recommended: 150-160 characters.
+     */
+    metaDescription?: string | null;
+    /**
+     * Image for social media sharing. Recommended: 1200x630 pixels.
+     */
+    ogImage?: (number | null) | Media;
+    /**
+     * Override the default canonical URL if needed.
+     */
+    canonicalURL?: string | null;
+    /**
+     * Prevent search engines from indexing this page.
+     */
+    noIndex?: boolean | null;
+    /**
+     * Add FAQ items for Google FAQ Rich Results.
+     */
+    faq?:
+      | {
+          question: string;
+          answer: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "home-page_select".
  */
 export interface HomePageSelect<T extends boolean = true> {
@@ -809,6 +992,16 @@ export interface HomePageSelect<T extends boolean = true> {
     | {
         metaTitle?: T;
         metaDescription?: T;
+        ogImage?: T;
+        canonicalURL?: T;
+        noIndex?: T;
+        faq?:
+          | T
+          | {
+              question?: T;
+              answer?: T;
+              id?: T;
+            };
       };
   updatedAt?: T;
   createdAt?: T;
@@ -888,6 +1081,87 @@ export interface SiteSettingsSelect<T extends boolean = true> {
     | T
     | {
         googleAnalyticsId?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "plans-page_select".
+ */
+export interface PlansPageSelect<T extends boolean = true> {
+  title?: T;
+  subtitle?: T;
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        ogImage?: T;
+        canonicalURL?: T;
+        noIndex?: T;
+        faq?:
+          | T
+          | {
+              question?: T;
+              answer?: T;
+              id?: T;
+            };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "docs-page_select".
+ */
+export interface DocsPageSelect<T extends boolean = true> {
+  title?: T;
+  subtitle?: T;
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        ogImage?: T;
+        canonicalURL?: T;
+        noIndex?: T;
+        faq?:
+          | T
+          | {
+              question?: T;
+              answer?: T;
+              id?: T;
+            };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "showcase-page_select".
+ */
+export interface ShowcasePageSelect<T extends boolean = true> {
+  title?: T;
+  subtitle?: T;
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        ogImage?: T;
+        canonicalURL?: T;
+        noIndex?: T;
+        faq?:
+          | T
+          | {
+              question?: T;
+              answer?: T;
+              id?: T;
+            };
       };
   updatedAt?: T;
   createdAt?: T;

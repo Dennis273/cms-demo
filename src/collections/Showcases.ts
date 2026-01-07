@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { seoFieldsBasic } from '@/fields/seo'
 
 export const Showcases: CollectionConfig = {
   slug: 'showcases',
@@ -91,5 +92,7 @@ export const Showcases: CollectionConfig = {
         ja: '表示順',
       },
     },
+    // SEO fields
+    seoFieldsBasic,
   ],
 }

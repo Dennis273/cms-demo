@@ -1,4 +1,5 @@
 import type { GlobalConfig } from 'payload'
+import { seoFields } from '@/fields/seo'
 
 export const HomePage: GlobalConfig = {
   slug: 'home-page',
@@ -230,33 +231,7 @@ export const HomePage: GlobalConfig = {
         },
       ],
     },
-    // SEO
-    {
-      name: 'seo',
-      type: 'group',
-      label: 'SEO',
-      fields: [
-        {
-          name: 'metaTitle',
-          type: 'text',
-          localized: true,
-          label: {
-            en: 'Meta Title',
-            zh: 'Meta 标题',
-            ja: 'メタタイトル',
-          },
-        },
-        {
-          name: 'metaDescription',
-          type: 'textarea',
-          localized: true,
-          label: {
-            en: 'Meta Description',
-            zh: 'Meta 描述',
-            ja: 'メタ説明',
-          },
-        },
-      ],
-    },
+    // SEO with FAQ Schema support
+    seoFields,
   ],
 }

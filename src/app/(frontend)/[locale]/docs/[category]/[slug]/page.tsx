@@ -1,10 +1,82 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { getPayload, Locale, isValidLocale } from '@/lib/payload'
 import { notFound } from 'next/navigation'
 import { RichText } from '@/components/RichText'
 
 interface PageProps {
   params: Promise<{ locale: string; category: string; slug: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale, category: categorySlug, slug } = await params
+
+  if (!isValidLocale(locale)) {
+    return {}
+  }
+
+  const payload = await getPayload()
+
+  // Find the category
+  const { docs: categories } = await payload.find({
+    collection: 'doc-categories',
+    where: { slug: { equals: categorySlug } },
+    locale: locale as Locale,
+    limit: 1,
+  })
+
+  const category = categories[0]
+  if (!category) {
+    return {}
+  }
+
+  // Find the doc
+  const { docs } = await payload.find({
+    collection: 'docs',
+    where: {
+      slug: { equals: slug },
+      category: { equals: category.id },
+    },
+    locale: locale as Locale,
+    limit: 1,
+  })
+
+  const doc = docs[0]
+  if (!doc) {
+    return {}
+  }
+
+  const siteSettings = await payload.findGlobal({
+    slug: 'site-settings',
+    locale: locale as Locale,
+  })
+
+  const seo = doc.seo as { metaTitle?: string; metaDescription?: string } | undefined
+  const title = seo?.metaTitle || doc.title || ''
+  const description = seo?.metaDescription || doc.excerpt || ''
+
+  const ogImage = typeof siteSettings?.ogImage === 'object' && siteSettings.ogImage?.url
+    ? siteSettings.ogImage.url
+    : undefined
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      ...(ogImage && {
+        images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
+      }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      ...(ogImage && { images: [ogImage] }),
+    },
+  }
 }
 
 export default async function DocArticlePage({ params }: PageProps) {

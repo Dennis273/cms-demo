@@ -21,6 +21,9 @@ import { HomePage } from './globals/HomePage'
 import { Navigation } from './globals/Navigation'
 import { Footer } from './globals/Footer'
 import { SiteSettings } from './globals/SiteSettings'
+import { PlansPage } from './globals/PlansPage'
+import { DocsPage } from './globals/DocsPage'
+import { ShowcasePage } from './globals/ShowcasePage'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -56,6 +59,9 @@ export default buildConfig({
     Navigation,
     Footer,
     SiteSettings,
+    PlansPage,
+    DocsPage,
+    ShowcasePage,
   ],
   // Localization
   localization: {

@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { seoFieldsBasic } from '@/fields/seo'
 
 export const Docs: CollectionConfig = {
   slug: 'docs',
@@ -78,5 +79,7 @@ export const Docs: CollectionConfig = {
         description: 'Order within category, lower numbers appear first',
       },
     },
+    // SEO fields
+    seoFieldsBasic,
   ],
 }
