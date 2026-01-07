@@ -69,6 +69,11 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    plans: Plan;
+    'doc-categories': DocCategory;
+    docs: Doc;
+    showcases: Showcase;
+    testimonials: Testimonial;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,6 +83,11 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    plans: PlansSelect<false> | PlansSelect<true>;
+    'doc-categories': DocCategoriesSelect<false> | DocCategoriesSelect<true>;
+    docs: DocsSelect<false> | DocsSelect<true>;
+    showcases: ShowcasesSelect<false> | ShowcasesSelect<true>;
+    testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -86,10 +96,20 @@ export interface Config {
   db: {
     defaultIDType: number;
   };
-  fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
-  locale: null;
+  fallbackLocale: ('false' | 'none' | 'null') | false | null | ('zh' | 'en' | 'ja') | ('zh' | 'en' | 'ja')[];
+  globals: {
+    'home-page': HomePage;
+    navigation: Navigation;
+    footer: Footer;
+    'site-settings': SiteSetting;
+  };
+  globalsSelect: {
+    'home-page': HomePageSelect<false> | HomePageSelect<true>;
+    navigation: NavigationSelect<false> | NavigationSelect<true>;
+    footer: FooterSelect<false> | FooterSelect<true>;
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+  };
+  locale: 'zh' | 'en' | 'ja';
   user: User & {
     collection: 'users';
   };
@@ -159,6 +179,164 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "plans".
+ */
+export interface Plan {
+  id: number;
+  name: string;
+  /**
+   * URL-friendly identifier (e.g., "basic", "pro", "enterprise")
+   */
+  slug: string;
+  description?: string | null;
+  pricing: {
+    USD: {
+      monthly: number;
+      yearly: number;
+    };
+    CNY: {
+      monthly: number;
+      yearly: number;
+    };
+    JPY: {
+      monthly: number;
+      yearly: number;
+    };
+  };
+  limits: {
+    users: number;
+    storage: number;
+  };
+  features?:
+    | {
+        name: string;
+        included?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Highlight this plan as recommended
+   */
+  isRecommended?: boolean | null;
+  /**
+   * Lower numbers appear first
+   */
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "doc-categories".
+ */
+export interface DocCategory {
+  id: number;
+  name: string;
+  /**
+   * URL-friendly identifier (e.g., "getting-started", "account", "api")
+   */
+  slug: string;
+  description?: string | null;
+  /**
+   * Icon name or emoji (e.g., "📚", "rocket", "settings")
+   */
+  icon?: string | null;
+  /**
+   * Lower numbers appear first
+   */
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "docs".
+ */
+export interface Doc {
+  id: number;
+  title: string;
+  /**
+   * URL-friendly identifier (e.g., "how-to-login", "smtp-settings")
+   */
+  slug: string;
+  category: number | DocCategory;
+  /**
+   * Brief summary shown in doc listings
+   */
+  excerpt?: string | null;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  /**
+   * Order within category, lower numbers appear first
+   */
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "showcases".
+ */
+export interface Showcase {
+  id: number;
+  companyName: string;
+  logo?: (number | null) | Media;
+  industry: string;
+  companySize?: ('1-10' | '11-50' | '51-200' | '201-500' | '500+') | null;
+  description: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  /**
+   * Company website URL (optional)
+   */
+  website?: string | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials".
+ */
+export interface Testimonial {
+  id: number;
+  userName: string;
+  avatar?: (number | null) | Media;
+  position: string;
+  company: string;
+  content: string;
+  rating: number;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -188,6 +366,26 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'plans';
+        value: number | Plan;
+      } | null)
+    | ({
+        relationTo: 'doc-categories';
+        value: number | DocCategory;
+      } | null)
+    | ({
+        relationTo: 'docs';
+        value: number | Doc;
+      } | null)
+    | ({
+        relationTo: 'showcases';
+        value: number | Showcase;
+      } | null)
+    | ({
+        relationTo: 'testimonials';
+        value: number | Testimonial;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -271,6 +469,111 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "plans_select".
+ */
+export interface PlansSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  pricing?:
+    | T
+    | {
+        USD?:
+          | T
+          | {
+              monthly?: T;
+              yearly?: T;
+            };
+        CNY?:
+          | T
+          | {
+              monthly?: T;
+              yearly?: T;
+            };
+        JPY?:
+          | T
+          | {
+              monthly?: T;
+              yearly?: T;
+            };
+      };
+  limits?:
+    | T
+    | {
+        users?: T;
+        storage?: T;
+      };
+  features?:
+    | T
+    | {
+        name?: T;
+        included?: T;
+        id?: T;
+      };
+  isRecommended?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "doc-categories_select".
+ */
+export interface DocCategoriesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  icon?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "docs_select".
+ */
+export interface DocsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  category?: T;
+  excerpt?: T;
+  content?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "showcases_select".
+ */
+export interface ShowcasesSelect<T extends boolean = true> {
+  companyName?: T;
+  logo?: T;
+  industry?: T;
+  companySize?: T;
+  description?: T;
+  website?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials_select".
+ */
+export interface TestimonialsSelect<T extends boolean = true> {
+  userName?: T;
+  avatar?: T;
+  position?: T;
+  company?: T;
+  content?: T;
+  rating?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -308,6 +611,287 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home-page".
+ */
+export interface HomePage {
+  id: number;
+  hero: {
+    title: string;
+    subtitle?: string | null;
+    backgroundImage?: (number | null) | Media;
+    primaryCTA?: {
+      text?: string | null;
+      link?: string | null;
+    };
+    secondaryCTA?: {
+      text?: string | null;
+      link?: string | null;
+    };
+  };
+  features?:
+    | {
+        /**
+         * Icon name or emoji (e.g., "🔒", "shield", "cloud")
+         */
+        icon?: string | null;
+        title: string;
+        description?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  stats?:
+    | {
+        /**
+         * e.g., "10,000+", "99.99%", "50M+"
+         */
+        value: string;
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  clientLogos?:
+    | {
+        name: string;
+        logo: number | Media;
+        id?: string | null;
+      }[]
+    | null;
+  seo?: {
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "navigation".
+ */
+export interface Navigation {
+  id: number;
+  logo?: (number | null) | Media;
+  /**
+   * Text displayed next to or instead of logo
+   */
+  logoText?: string | null;
+  items?:
+    | {
+        label: string;
+        link: string;
+        openInNewTab?: boolean | null;
+        highlight?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "footer".
+ */
+export interface Footer {
+  id: number;
+  columns?:
+    | {
+        title: string;
+        links?:
+          | {
+              label: string;
+              link: string;
+              openInNewTab?: boolean | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  socialLinks?:
+    | {
+        platform: 'twitter' | 'facebook' | 'linkedin' | 'github' | 'youtube' | 'instagram' | 'wechat' | 'weibo';
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * e.g., "© 2024 MeowMail. All rights reserved."
+   */
+  copyright?: string | null;
+  /**
+   * Links displayed at the very bottom (Privacy Policy, Terms, etc.)
+   */
+  bottomLinks?:
+    | {
+        label: string;
+        link: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings".
+ */
+export interface SiteSetting {
+  id: number;
+  siteName: string;
+  siteDescription?: string | null;
+  favicon?: (number | null) | Media;
+  /**
+   * Default image for social media sharing
+   */
+  ogImage?: (number | null) | Media;
+  defaultCurrency?: ('USD' | 'CNY' | 'JPY') | null;
+  contactEmail?: string | null;
+  supportEmail?: string | null;
+  analytics?: {
+    /**
+     * e.g., G-XXXXXXXXXX
+     */
+    googleAnalyticsId?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home-page_select".
+ */
+export interface HomePageSelect<T extends boolean = true> {
+  hero?:
+    | T
+    | {
+        title?: T;
+        subtitle?: T;
+        backgroundImage?: T;
+        primaryCTA?:
+          | T
+          | {
+              text?: T;
+              link?: T;
+            };
+        secondaryCTA?:
+          | T
+          | {
+              text?: T;
+              link?: T;
+            };
+      };
+  features?:
+    | T
+    | {
+        icon?: T;
+        title?: T;
+        description?: T;
+        id?: T;
+      };
+  stats?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        id?: T;
+      };
+  clientLogos?:
+    | T
+    | {
+        name?: T;
+        logo?: T;
+        id?: T;
+      };
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "navigation_select".
+ */
+export interface NavigationSelect<T extends boolean = true> {
+  logo?: T;
+  logoText?: T;
+  items?:
+    | T
+    | {
+        label?: T;
+        link?: T;
+        openInNewTab?: T;
+        highlight?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "footer_select".
+ */
+export interface FooterSelect<T extends boolean = true> {
+  columns?:
+    | T
+    | {
+        title?: T;
+        links?:
+          | T
+          | {
+              label?: T;
+              link?: T;
+              openInNewTab?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  socialLinks?:
+    | T
+    | {
+        platform?: T;
+        url?: T;
+        id?: T;
+      };
+  copyright?: T;
+  bottomLinks?:
+    | T
+    | {
+        label?: T;
+        link?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  siteName?: T;
+  siteDescription?: T;
+  favicon?: T;
+  ogImage?: T;
+  defaultCurrency?: T;
+  contactEmail?: T;
+  supportEmail?: T;
+  analytics?:
+    | T
+    | {
+        googleAnalyticsId?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
