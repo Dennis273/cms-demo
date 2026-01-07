@@ -5,6 +5,7 @@ import { getPayload, Locale, localeToCurrency, currencySymbols, isValidLocale } 
 import { notFound } from 'next/navigation'
 import { generateFAQSchema } from '@/lib/seo'
 import { JsonLd } from '@/components/JsonLd'
+import { ScrollAnimator, StaggerContainer } from '@/components/ScrollAnimator'
 
 export const dynamic = 'force-dynamic'
 
@@ -108,6 +109,7 @@ export default async function HomePage({ params }: PageProps) {
       recommended: '推荐',
       testimonialsTitle: '用户评价',
       trustedBy: '已有众多企业信赖',
+      learnMore: '进一步了解',
     },
     en: {
       plansTitle: 'Choose Your Plan',
@@ -117,8 +119,9 @@ export default async function HomePage({ params }: PageProps) {
       users: 'users',
       storage: 'GB storage',
       recommended: 'Recommended',
-      testimonialsTitle: 'Testimonials',
-      trustedBy: 'Trusted by',
+      testimonialsTitle: 'What Our Customers Say',
+      trustedBy: 'Trusted by leading companies worldwide',
+      learnMore: 'Learn more',
     },
     ja: {
       plansTitle: 'プランを選択',
@@ -129,7 +132,8 @@ export default async function HomePage({ params }: PageProps) {
       storage: 'GB ストレージ',
       recommended: 'おすすめ',
       testimonialsTitle: 'お客様の声',
-      trustedBy: '信頼される企業',
+      trustedBy: '世界中の企業から信頼',
+      learnMore: '詳しく見る',
     },
   }[locale]
 
@@ -159,48 +163,52 @@ export default async function HomePage({ params }: PageProps) {
           <p className="hero-subtitle">{homePage?.hero?.subtitle}</p>
           <div className="hero-ctas">
             {homePage?.hero?.primaryCTA?.text && (
-              <Link href={homePage.hero.primaryCTA.link || '#'} className="btn btn-primary">
+              <Link href={homePage.hero.primaryCTA.link || '#'} className="btn btn-primary btn-large">
                 {homePage.hero.primaryCTA.text}
               </Link>
             )}
             {homePage?.hero?.secondaryCTA?.text && (
-              <Link href={homePage.hero.secondaryCTA.link || '#'} className="btn btn-secondary">
-                {homePage.hero.secondaryCTA.text}
+              <Link href={homePage.hero.secondaryCTA.link || '#'} className="btn btn-secondary btn-large">
+                {homePage.hero.secondaryCTA.text} →
               </Link>
             )}
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Features Section - Bento Grid Style */}
       {homePage?.features && homePage.features.length > 0 && (
         <section className="features">
           <div className="container">
-            <div className="features-grid">
+            <StaggerContainer className="features-grid" staggerDelay={100}>
               {homePage.features.map((feature, index) => (
-                <div key={index} className="feature-card">
-                  {feature.icon && <span className="feature-icon">{feature.icon}</span>}
-                  <h3>{feature.title}</h3>
-                  <p>{feature.description}</p>
-                </div>
+                <ScrollAnimator key={index}>
+                  <div className="feature-card">
+                    {feature.icon && <span className="feature-icon">{feature.icon}</span>}
+                    <h3>{feature.title}</h3>
+                    <p>{feature.description}</p>
+                  </div>
+                </ScrollAnimator>
               ))}
-            </div>
+            </StaggerContainer>
           </div>
         </section>
       )}
 
-      {/* Stats Section */}
+      {/* Stats Section - Dark & Bold */}
       {homePage?.stats && homePage.stats.length > 0 && (
         <section className="stats">
           <div className="container">
-            <div className="stats-grid">
+            <StaggerContainer className="stats-grid" staggerDelay={150}>
               {homePage.stats.map((stat, index) => (
-                <div key={index} className="stat-item">
-                  <span className="stat-value">{stat.value}</span>
-                  <span className="stat-label">{stat.label}</span>
-                </div>
+                <ScrollAnimator key={index}>
+                  <div className="stat-item">
+                    <span className="stat-value">{stat.value}</span>
+                    <span className="stat-label">{stat.label}</span>
+                  </div>
+                </ScrollAnimator>
               ))}
-            </div>
+            </StaggerContainer>
           </div>
         </section>
       )}
@@ -209,42 +217,43 @@ export default async function HomePage({ params }: PageProps) {
       {plans && plans.length > 0 && (
         <section className="plans-preview">
           <div className="container">
-            <h2>{t.plansTitle}</h2>
-            <div className="plans-grid">
+            <ScrollAnimator>
+              <h2>{t.plansTitle}</h2>
+            </ScrollAnimator>
+            <StaggerContainer className="plans-grid" staggerDelay={100}>
               {plans.map((plan: any) => {
                 const price = plan.pricing?.[currency]
                 return (
-                  <div
-                    key={plan.id}
-                    className={`plan-card ${plan.isRecommended ? 'recommended' : ''}`}
-                  >
-                    {plan.isRecommended && (
-                      <span className="recommended-badge">{t.recommended}</span>
-                    )}
-                    <h3>{plan.name}</h3>
-                    <p className="plan-description">{plan.description}</p>
-                    <div className="plan-price">
-                      <span className="price">
-                        {currencySymbol}
-                        {price?.monthly}
-                      </span>
-                      <span className="period">{t.perMonth}</span>
+                  <ScrollAnimator key={plan.id}>
+                    <div className={`plan-card ${plan.isRecommended ? 'recommended' : ''}`}>
+                      {plan.isRecommended && (
+                        <span className="recommended-badge">{t.recommended}</span>
+                      )}
+                      <h3>{plan.name}</h3>
+                      <p className="plan-description">{plan.description}</p>
+                      <div className="plan-price">
+                        <span className="price">
+                          {currencySymbol}
+                          {price?.monthly}
+                        </span>
+                        <span className="period">{t.perMonth}</span>
+                      </div>
+                      <ul className="plan-limits">
+                        <li>
+                          {plan.limits?.users} {t.users}
+                        </li>
+                        <li>
+                          {plan.limits?.storage} {t.storage}
+                        </li>
+                      </ul>
+                      <Link href={`/${locale}/plans`} className="btn btn-outline plan-cta">
+                        {t.viewAllPlans}
+                      </Link>
                     </div>
-                    <ul className="plan-limits">
-                      <li>
-                        {plan.limits?.users} {t.users}
-                      </li>
-                      <li>
-                        {plan.limits?.storage} {t.storage}
-                      </li>
-                    </ul>
-                    <Link href={`/${locale}/plans`} className="btn btn-outline">
-                      {t.viewAllPlans}
-                    </Link>
-                  </div>
+                  </ScrollAnimator>
                 )
               })}
-            </div>
+            </StaggerContainer>
           </div>
         </section>
       )}
@@ -253,22 +262,26 @@ export default async function HomePage({ params }: PageProps) {
       {homePage?.clientLogos && homePage.clientLogos.length > 0 && (
         <section className="client-logos">
           <div className="container">
-            <p className="logos-title">{t.trustedBy}</p>
-            <div className="logos-grid">
+            <ScrollAnimator>
+              <p className="logos-title">{t.trustedBy}</p>
+            </ScrollAnimator>
+            <StaggerContainer className="logos-grid" staggerDelay={100}>
               {homePage.clientLogos.map((client, index) => (
-                <div key={index} className="logo-item">
-                  {typeof client.logo === 'object' && client.logo?.url && (
-                    <Image
-                      src={client.logo.url}
-                      alt={client.name || ''}
-                      width={120}
-                      height={40}
-                      style={{ objectFit: 'contain' }}
-                    />
-                  )}
-                </div>
+                <ScrollAnimator key={index}>
+                  <div className="logo-item">
+                    {typeof client.logo === 'object' && client.logo?.url && (
+                      <Image
+                        src={client.logo.url}
+                        alt={client.name || ''}
+                        width={120}
+                        height={40}
+                        style={{ objectFit: 'contain' }}
+                      />
+                    )}
+                  </div>
+                </ScrollAnimator>
               ))}
-            </div>
+            </StaggerContainer>
           </div>
         </section>
       )}
@@ -277,35 +290,39 @@ export default async function HomePage({ params }: PageProps) {
       {testimonials && testimonials.length > 0 && (
         <section className="testimonials">
           <div className="container">
-            <h2>{t.testimonialsTitle}</h2>
-            <div className="testimonials-grid">
+            <ScrollAnimator>
+              <h2>{t.testimonialsTitle}</h2>
+            </ScrollAnimator>
+            <StaggerContainer className="testimonials-grid" staggerDelay={150}>
               {testimonials.map((testimonial: any) => (
-                <div key={testimonial.id} className="testimonial-card">
-                  <div className="testimonial-rating">
-                    {'★'.repeat(testimonial.rating)}
-                    {'☆'.repeat(5 - testimonial.rating)}
-                  </div>
-                  <p className="testimonial-content">&ldquo;{testimonial.content}&rdquo;</p>
-                  <div className="testimonial-author">
-                    {typeof testimonial.avatar === 'object' && testimonial.avatar?.url && (
-                      <Image
-                        src={testimonial.avatar.url}
-                        alt={testimonial.userName}
-                        width={48}
-                        height={48}
-                        className="author-avatar"
-                      />
-                    )}
-                    <div className="author-info">
-                      <span className="author-name">{testimonial.userName}</span>
-                      <span className="author-position">
-                        {testimonial.position}, {testimonial.company}
-                      </span>
+                <ScrollAnimator key={testimonial.id}>
+                  <div className="testimonial-card">
+                    <div className="testimonial-rating">
+                      {'★'.repeat(testimonial.rating)}
+                      {'☆'.repeat(5 - testimonial.rating)}
+                    </div>
+                    <p className="testimonial-content">&ldquo;{testimonial.content}&rdquo;</p>
+                    <div className="testimonial-author">
+                      {typeof testimonial.avatar === 'object' && testimonial.avatar?.url && (
+                        <Image
+                          src={testimonial.avatar.url}
+                          alt={testimonial.userName}
+                          width={56}
+                          height={56}
+                          className="author-avatar"
+                        />
+                      )}
+                      <div className="author-info">
+                        <span className="author-name">{testimonial.userName}</span>
+                        <span className="author-position">
+                          {testimonial.position}, {testimonial.company}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </ScrollAnimator>
               ))}
-            </div>
+            </StaggerContainer>
           </div>
         </section>
       )}
