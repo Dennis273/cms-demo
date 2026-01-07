@@ -1,8 +1,63 @@
+import type { Metadata } from 'next'
 import { getPayload, Locale, localeToCurrency, currencySymbols, isValidLocale } from '@/lib/payload'
 import { notFound } from 'next/navigation'
+import { generateFAQSchema } from '@/lib/seo'
+import { JsonLd } from '@/components/JsonLd'
 
 interface PageProps {
   params: Promise<{ locale: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale } = await params
+
+  if (!isValidLocale(locale)) {
+    return {}
+  }
+
+  const payload = await getPayload()
+  const plansPage = await payload.findGlobal({
+    slug: 'plans-page',
+    locale: locale as Locale,
+  })
+
+  const siteSettings = await payload.findGlobal({
+    slug: 'site-settings',
+    locale: locale as Locale,
+  })
+
+  const seo = plansPage?.seo
+  const fallbackTitles = { zh: '定价方案', en: 'Pricing Plans', ja: '料金プラン' }
+  const title = seo?.metaTitle || plansPage?.title || fallbackTitles[locale as keyof typeof fallbackTitles]
+  const description = seo?.metaDescription || plansPage?.subtitle || ''
+
+  const ogImage = typeof seo?.ogImage === 'object' && seo.ogImage?.url
+    ? seo.ogImage.url
+    : typeof siteSettings?.ogImage === 'object' && siteSettings.ogImage?.url
+      ? siteSettings.ogImage.url
+      : undefined
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      ...(ogImage && {
+        images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
+      }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      ...(ogImage && { images: [ogImage] }),
+    },
+    ...(seo?.noIndex && {
+      robots: { index: false, follow: false },
+    }),
+  }
 }
 
 export default async function PlansPage({ params }: PageProps) {
@@ -14,6 +69,12 @@ export default async function PlansPage({ params }: PageProps) {
 
   const payload = await getPayload()
 
+  // Fetch plans page settings
+  const plansPage = await payload.findGlobal({
+    slug: 'plans-page',
+    locale: locale as Locale,
+  })
+
   const { docs: plans } = await payload.find({
     collection: 'plans',
     locale: locale as Locale,
@@ -22,6 +83,9 @@ export default async function PlansPage({ params }: PageProps) {
 
   const currency = localeToCurrency[locale]
   const currencySymbol = currencySymbols[currency]
+
+  // Generate FAQ Schema JSON-LD
+  const faqSchema = generateFAQSchema(plansPage?.seo?.faq as Array<{ question: string; answer: string }> | null)
 
   const t = {
     zh: {
@@ -76,10 +140,13 @@ export default async function PlansPage({ params }: PageProps) {
 
   return (
     <div className="plans-page">
+      {/* FAQ Schema JSON-LD */}
+      <JsonLd data={faqSchema} />
+
       <div className="container">
         <header className="page-header">
-          <h1>{t.title}</h1>
-          <p>{t.subtitle}</p>
+          <h1>{plansPage?.title || t.title}</h1>
+          <p>{plansPage?.subtitle || t.subtitle}</p>
         </header>
 
         <div className="plans-grid full">

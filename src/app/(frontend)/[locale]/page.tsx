@@ -1,12 +1,66 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import type { Metadata } from 'next'
 import { getPayload, Locale, localeToCurrency, currencySymbols, isValidLocale } from '@/lib/payload'
 import { notFound } from 'next/navigation'
+import { generateFAQSchema } from '@/lib/seo'
+import { JsonLd } from '@/components/JsonLd'
 
 export const dynamic = 'force-dynamic'
 
 interface PageProps {
   params: Promise<{ locale: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale } = await params
+
+  if (!isValidLocale(locale)) {
+    return {}
+  }
+
+  const payload = await getPayload()
+  const homePage = await payload.findGlobal({
+    slug: 'home-page',
+    locale: locale as Locale,
+  })
+
+  const siteSettings = await payload.findGlobal({
+    slug: 'site-settings',
+    locale: locale as Locale,
+  })
+
+  const seo = homePage?.seo
+  const title = seo?.metaTitle || homePage?.hero?.title || siteSettings?.siteName || 'MeowMail'
+  const description = seo?.metaDescription || siteSettings?.siteDescription || ''
+
+  const ogImage = typeof seo?.ogImage === 'object' && seo.ogImage?.url
+    ? seo.ogImage.url
+    : typeof siteSettings?.ogImage === 'object' && siteSettings.ogImage?.url
+      ? siteSettings.ogImage.url
+      : undefined
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      ...(ogImage && {
+        images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
+      }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      ...(ogImage && { images: [ogImage] }),
+    },
+    ...(seo?.noIndex && {
+      robots: { index: false, follow: false },
+    }),
+  }
 }
 
 export default async function HomePage({ params }: PageProps) {
@@ -79,8 +133,14 @@ export default async function HomePage({ params }: PageProps) {
     },
   }[locale]
 
+  // Generate FAQ Schema JSON-LD
+  const faqSchema = generateFAQSchema(homePage?.seo?.faq as Array<{ question: string; answer: string }> | null)
+
   return (
     <div className="home-page">
+      {/* FAQ Schema JSON-LD */}
+      <JsonLd data={faqSchema} />
+
       {/* Hero Section */}
       <section className="hero">
         {homePage?.hero?.backgroundImage && typeof homePage.hero.backgroundImage === 'object' && (
