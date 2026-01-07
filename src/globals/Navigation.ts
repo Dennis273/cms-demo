@@ -57,11 +57,17 @@ export const Navigation: GlobalConfig = {
         {
           name: 'link',
           type: 'text',
-          required: true,
           label: {
             en: 'Link',
             zh: '链接',
             ja: 'リンク',
+          },
+          admin: {
+            description: {
+              en: 'Leave empty if this item has sub-menu',
+              zh: '如果有子菜单可留空',
+              ja: 'サブメニューがある場合は空にしてください',
+            },
           },
         },
         {
@@ -83,6 +89,55 @@ export const Navigation: GlobalConfig = {
             zh: '高亮显示 (CTA样式)',
             ja: 'ハイライト（CTAスタイル）',
           },
+        },
+        {
+          name: 'children',
+          type: 'array',
+          label: {
+            en: 'Sub-menu Items',
+            zh: '子菜单项',
+            ja: 'サブメニュー項目',
+          },
+          admin: {
+            description: {
+              en: 'Add sub-menu items for dropdown',
+              zh: '添加下拉子菜单项',
+              ja: 'ドロップダウンのサブメニュー項目を追加',
+            },
+          },
+          fields: [
+            {
+              name: 'label',
+              type: 'text',
+              required: true,
+              localized: true,
+              label: {
+                en: 'Label',
+                zh: '标签',
+                ja: 'ラベル',
+              },
+            },
+            {
+              name: 'link',
+              type: 'text',
+              required: true,
+              label: {
+                en: 'Link',
+                zh: '链接',
+                ja: 'リンク',
+              },
+            },
+            {
+              name: 'openInNewTab',
+              type: 'checkbox',
+              defaultValue: false,
+              label: {
+                en: 'Open in New Tab',
+                zh: '在新标签页打开',
+                ja: '新しいタブで開く',
+              },
+            },
+          ],
         },
       ],
     },
