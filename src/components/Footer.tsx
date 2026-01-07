@@ -4,24 +4,27 @@ import { Locale } from '@/lib/i18n'
 interface FooterLink {
   label: string
   link: string
-  openInNewTab?: boolean
+  openInNewTab?: boolean | null
+  id?: string | null
 }
 
 interface FooterColumn {
   title: string
-  links: FooterLink[]
+  links?: FooterLink[] | null
+  id?: string | null
 }
 
 interface SocialLink {
   platform: string
   url: string
+  id?: string | null
 }
 
 interface FooterProps {
-  columns: FooterColumn[]
-  socialLinks: SocialLink[]
-  copyright?: string
-  bottomLinks: FooterLink[]
+  columns?: FooterColumn[] | null
+  socialLinks?: SocialLink[] | null
+  copyright?: string | null
+  bottomLinks?: FooterLink[] | null
   locale: Locale
 }
 

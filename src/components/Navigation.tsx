@@ -7,13 +7,14 @@ import { Locale, locales } from '@/lib/i18n'
 interface NavItem {
   label: string
   link: string
-  openInNewTab?: boolean
-  highlight?: boolean
+  openInNewTab?: boolean | null
+  highlight?: boolean | null
+  id?: string | null
 }
 
 interface NavigationProps {
-  logoText?: string
-  items: NavItem[]
+  logoText?: string | null
+  items?: NavItem[] | null
   locale: Locale
 }
 
@@ -34,7 +35,7 @@ export function Navigation({ logoText, items, locale }: NavigationProps) {
         </Link>
 
         <div className="nav-items">
-          {items.map((item, index) => (
+          {items?.map((item, index) => (
             <Link
               key={index}
               href={item.link.startsWith('/') ? `/${locale}${item.link}` : item.link}
