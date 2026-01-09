@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
-import type { Media } from '@/payload-types'
 
 export interface SEOData {
   metaTitle?: string | null
   metaDescription?: string | null
-  ogImage?: Media | string | number | null
+  ogImage?: string | null
   canonicalURL?: string | null
   noIndex?: boolean | null
   faq?: Array<{
@@ -21,7 +20,7 @@ export interface GenerateMetadataOptions {
   siteUrl: string
   locale: string
   path?: string
-  defaultOgImage?: Media | string | number | null
+  defaultOgImage?: string | null
 }
 
 /**
@@ -42,10 +41,7 @@ export function generateSEOMetadata({
   const canonicalUrl = seo?.canonicalURL || `${siteUrl}/${locale}${path}`
 
   // Get OG image URL
-  const ogImageData = seo?.ogImage || defaultOgImage
-  const ogImageUrl = typeof ogImageData === 'object' && ogImageData?.url
-    ? ogImageData.url
-    : undefined
+  const ogImageUrl = seo?.ogImage || defaultOgImage || undefined
 
   const metadata: Metadata = {
     title: {

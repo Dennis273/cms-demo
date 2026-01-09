@@ -1,9 +1,34 @@
 import Link from 'next/link'
-import { getPayload, Locale, isValidLocale } from '@/lib/payload'
+import type { Metadata } from 'next'
+import {
+  getCategoryBySlug,
+  getDocsByCategory,
+  isValidLocale,
+} from '@/lib/data'
+import type { Locale } from '@/config/types'
 import { notFound } from 'next/navigation'
 
 interface PageProps {
   params: Promise<{ locale: string; category: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale, category: categorySlug } = await params
+
+  if (!isValidLocale(locale)) {
+    return {}
+  }
+
+  const category = getCategoryBySlug(locale as Locale, categorySlug)
+
+  if (!category) {
+    return {}
+  }
+
+  return {
+    title: category.name,
+    description: category.description,
+  }
 }
 
 export default async function DocCategoryPage({ params }: PageProps) {
@@ -13,28 +38,12 @@ export default async function DocCategoryPage({ params }: PageProps) {
     notFound()
   }
 
-  const payload = await getPayload()
-
-  // Find the category
-  const { docs: categories } = await payload.find({
-    collection: 'doc-categories',
-    where: { slug: { equals: categorySlug } },
-    locale: locale as Locale,
-    limit: 1,
-  })
-
-  const category = categories[0]
+  const category = getCategoryBySlug(locale as Locale, categorySlug)
   if (!category) {
     notFound()
   }
 
-  // Fetch docs in this category
-  const { docs } = await payload.find({
-    collection: 'docs',
-    where: { category: { equals: category.id } },
-    locale: locale as Locale,
-    sort: 'order',
-  })
+  const docs = getDocsByCategory(locale as Locale, categorySlug)
 
   const t = {
     zh: {
@@ -49,7 +58,7 @@ export default async function DocCategoryPage({ params }: PageProps) {
       backToDocs: '← ドキュメントに戻る',
       articles: '記事',
     },
-  }[locale]
+  }[locale as Locale]
 
   return (
     <div className="docs-page">
@@ -68,7 +77,7 @@ export default async function DocCategoryPage({ params }: PageProps) {
         </header>
 
         <div className="docs-list">
-          {docs.map((doc: any) => (
+          {docs.map((doc) => (
             <Link
               key={doc.id}
               href={`/${locale}/docs/${categorySlug}/${doc.slug}`}

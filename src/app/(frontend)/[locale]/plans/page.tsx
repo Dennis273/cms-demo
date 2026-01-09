@@ -1,5 +1,12 @@
 import type { Metadata } from 'next'
-import { getPayload, Locale, localeToCurrency, currencySymbols, isValidLocale } from '@/lib/payload'
+import {
+  getPlansPageConfig,
+  getPlans,
+  isValidLocale,
+  localeToCurrency,
+  currencySymbols,
+} from '@/lib/data'
+import type { Locale } from '@/config/types'
 import { notFound } from 'next/navigation'
 import { generateFAQSchema } from '@/lib/seo'
 import { JsonLd } from '@/components/JsonLd'
@@ -15,44 +22,25 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return {}
   }
 
-  const payload = await getPayload()
-  const plansPage = await payload.findGlobal({
-    slug: 'plans-page',
-    locale: locale as Locale,
-  })
-
-  const siteSettings = await payload.findGlobal({
-    slug: 'site-settings',
-    locale: locale as Locale,
-  })
-
-  const seo = plansPage?.seo
-  const fallbackTitles = { zh: '定价方案', en: 'Pricing Plans', ja: '料金プラン' }
-  const title = seo?.metaTitle || plansPage?.title || fallbackTitles[locale as keyof typeof fallbackTitles]
-  const description = seo?.metaDescription || plansPage?.subtitle || ''
-
-  const ogImage = typeof seo?.ogImage === 'object' && seo.ogImage?.url
-    ? seo.ogImage.url
-    : typeof siteSettings?.ogImage === 'object' && siteSettings.ogImage?.url
-      ? siteSettings.ogImage.url
-      : undefined
+  const plansPage = getPlansPageConfig(locale as Locale)
+  const seo = plansPage.seo
 
   return {
-    title,
-    description,
+    title: seo?.metaTitle || plansPage.title,
+    description: seo?.metaDescription || plansPage.subtitle,
     openGraph: {
-      title,
-      description,
+      title: seo?.metaTitle || plansPage.title,
+      description: seo?.metaDescription || plansPage.subtitle,
       type: 'website',
-      ...(ogImage && {
-        images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
+      ...(seo?.ogImage && {
+        images: [{ url: seo.ogImage, width: 1200, height: 630, alt: plansPage.title }],
       }),
     },
     twitter: {
       card: 'summary_large_image',
-      title,
-      description,
-      ...(ogImage && { images: [ogImage] }),
+      title: seo?.metaTitle || plansPage.title,
+      description: seo?.metaDescription || plansPage.subtitle,
+      ...(seo?.ogImage && { images: [seo.ogImage] }),
     },
     ...(seo?.noIndex && {
       robots: { index: false, follow: false },
@@ -67,30 +55,17 @@ export default async function PlansPage({ params }: PageProps) {
     notFound()
   }
 
-  const payload = await getPayload()
+  const plansPage = getPlansPageConfig(locale as Locale)
+  const plans = getPlans(locale as Locale)
 
-  // Fetch plans page settings
-  const plansPage = await payload.findGlobal({
-    slug: 'plans-page',
-    locale: locale as Locale,
-  })
-
-  const { docs: plans } = await payload.find({
-    collection: 'plans',
-    locale: locale as Locale,
-    sort: 'order',
-  })
-
-  const currency = localeToCurrency[locale]
+  const currency = localeToCurrency[locale as Locale]
   const currencySymbol = currencySymbols[currency]
 
   // Generate FAQ Schema JSON-LD
-  const faqSchema = generateFAQSchema(plansPage?.seo?.faq as Array<{ question: string; answer: string }> | null)
+  const faqSchema = generateFAQSchema(plansPage.seo?.faq || null)
 
   const t = {
     zh: {
-      title: '定价方案',
-      subtitle: '选择最适合您团队的方案',
       perMonth: '/月',
       perYear: '/年',
       yearly: '年付',
@@ -102,11 +77,8 @@ export default async function PlansPage({ params }: PageProps) {
       included: '✓',
       notIncluded: '✗',
       getStarted: '立即开始',
-      contactSales: '联系销售',
     },
     en: {
-      title: 'Pricing Plans',
-      subtitle: 'Choose the perfect plan for your team',
       perMonth: '/month',
       perYear: '/year',
       yearly: 'Yearly',
@@ -118,11 +90,8 @@ export default async function PlansPage({ params }: PageProps) {
       included: '✓',
       notIncluded: '✗',
       getStarted: 'Get Started',
-      contactSales: 'Contact Sales',
     },
     ja: {
-      title: '料金プラン',
-      subtitle: 'チームに最適なプランをお選びください',
       perMonth: '/月',
       perYear: '/年',
       yearly: '年払い',
@@ -134,9 +103,8 @@ export default async function PlansPage({ params }: PageProps) {
       included: '✓',
       notIncluded: '✗',
       getStarted: '始める',
-      contactSales: 'お問い合わせ',
     },
-  }[locale]
+  }[locale as Locale]
 
   return (
     <div className="plans-page">
@@ -145,13 +113,13 @@ export default async function PlansPage({ params }: PageProps) {
 
       <div className="container">
         <header className="page-header">
-          <h1>{plansPage?.title || t.title}</h1>
-          <p>{plansPage?.subtitle || t.subtitle}</p>
+          <h1>{plansPage.title}</h1>
+          <p>{plansPage.subtitle}</p>
         </header>
 
         <div className="plans-grid full">
-          {plans.map((plan: any) => {
-            const price = plan.pricing?.[currency]
+          {plans.map((plan) => {
+            const price = plan.pricing[currency as keyof typeof plan.pricing]
             return (
               <div
                 key={plan.id}
@@ -198,7 +166,7 @@ export default async function PlansPage({ params }: PageProps) {
                   <div className="plan-features">
                     <h4>{t.features}</h4>
                     <ul>
-                      {plan.features.map((feature: any, index: number) => (
+                      {plan.features.map((feature, index) => (
                         <li key={index} className={feature.included ? 'included' : 'not-included'}>
                           <span className="feature-status">
                             {feature.included ? t.included : t.notIncluded}

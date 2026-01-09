@@ -1,80 +1,44 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { getPayload, Locale, isValidLocale } from '@/lib/payload'
+import {
+  getCategoryBySlug,
+  getDocBySlug,
+  getDocsByCategory,
+  getDocContent,
+  isValidLocale,
+} from '@/lib/data'
+import type { Locale } from '@/config/types'
 import { notFound } from 'next/navigation'
-import { RichText } from '@/components/RichText'
 
 interface PageProps {
   params: Promise<{ locale: string; category: string; slug: string }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { locale, category: categorySlug, slug } = await params
+  const { locale, slug } = await params
 
   if (!isValidLocale(locale)) {
     return {}
   }
 
-  const payload = await getPayload()
+  const doc = getDocBySlug(locale as Locale, slug)
 
-  // Find the category
-  const { docs: categories } = await payload.find({
-    collection: 'doc-categories',
-    where: { slug: { equals: categorySlug } },
-    locale: locale as Locale,
-    limit: 1,
-  })
-
-  const category = categories[0]
-  if (!category) {
-    return {}
-  }
-
-  // Find the doc
-  const { docs } = await payload.find({
-    collection: 'docs',
-    where: {
-      slug: { equals: slug },
-      category: { equals: category.id },
-    },
-    locale: locale as Locale,
-    limit: 1,
-  })
-
-  const doc = docs[0]
   if (!doc) {
     return {}
   }
 
-  const siteSettings = await payload.findGlobal({
-    slug: 'site-settings',
-    locale: locale as Locale,
-  })
-
-  const seo = doc.seo as { metaTitle?: string; metaDescription?: string } | undefined
-  const title = seo?.metaTitle || doc.title || ''
-  const description = seo?.metaDescription || doc.excerpt || ''
-
-  const ogImage = typeof siteSettings?.ogImage === 'object' && siteSettings.ogImage?.url
-    ? siteSettings.ogImage.url
-    : undefined
-
   return {
-    title,
-    description,
+    title: doc.title,
+    description: doc.excerpt,
     openGraph: {
-      title,
-      description,
+      title: doc.title,
+      description: doc.excerpt,
       type: 'article',
-      ...(ogImage && {
-        images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
-      }),
     },
     twitter: {
       card: 'summary_large_image',
-      title,
-      description,
-      ...(ogImage && { images: [ogImage] }),
+      title: doc.title,
+      description: doc.excerpt,
     },
   }
 }
@@ -86,44 +50,21 @@ export default async function DocArticlePage({ params }: PageProps) {
     notFound()
   }
 
-  const payload = await getPayload()
-
-  // Find the category
-  const { docs: categories } = await payload.find({
-    collection: 'doc-categories',
-    where: { slug: { equals: categorySlug } },
-    locale: locale as Locale,
-    limit: 1,
-  })
-
-  const category = categories[0]
+  const category = getCategoryBySlug(locale as Locale, categorySlug)
   if (!category) {
     notFound()
   }
 
-  // Find the doc
-  const { docs } = await payload.find({
-    collection: 'docs',
-    where: {
-      slug: { equals: slug },
-      category: { equals: category.id },
-    },
-    locale: locale as Locale,
-    limit: 1,
-  })
-
-  const doc = docs[0]
-  if (!doc) {
+  const doc = getDocBySlug(locale as Locale, slug)
+  if (!doc || doc.categorySlug !== categorySlug) {
     notFound()
   }
 
-  // Fetch other docs in this category for sidebar
-  const { docs: relatedDocs } = await payload.find({
-    collection: 'docs',
-    where: { category: { equals: category.id } },
-    locale: locale as Locale,
-    sort: 'order',
-  })
+  // Get markdown content
+  const content = await getDocContent(locale as Locale, doc.contentFile)
+
+  // Related docs in this category
+  const relatedDocs = getDocsByCategory(locale as Locale, categorySlug)
 
   const t = {
     zh: {
@@ -138,7 +79,7 @@ export default async function DocArticlePage({ params }: PageProps) {
       backToCategory: '← に戻る',
       inThisCategory: 'このカテゴリの記事',
     },
-  }[locale]
+  }[locale as Locale]
 
   return (
     <div className="doc-article-page">
@@ -153,7 +94,7 @@ export default async function DocArticlePage({ params }: PageProps) {
             <nav className="sidebar-nav">
               <h4>{t.inThisCategory}</h4>
               <ul>
-                {relatedDocs.map((relatedDoc: any) => (
+                {relatedDocs.map((relatedDoc) => (
                   <li key={relatedDoc.id} className={relatedDoc.id === doc.id ? 'active' : ''}>
                     <Link href={`/${locale}/docs/${categorySlug}/${relatedDoc.slug}`}>
                       {relatedDoc.title}
@@ -171,10 +112,57 @@ export default async function DocArticlePage({ params }: PageProps) {
             </Link>
             <h1>{doc.title}</h1>
             {doc.excerpt && <p className="doc-excerpt">{doc.excerpt}</p>}
-            <RichText content={doc.content} className="doc-body" />
+            <div
+              className="doc-body markdown-body"
+              dangerouslySetInnerHTML={{ __html: parseMarkdown(content) }}
+            />
           </article>
         </div>
       </div>
     </div>
   )
+}
+
+// 简单的 Markdown 解析器
+function parseMarkdown(markdown: string): string {
+  let html = markdown
+    // 标题
+    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+    // 粗体和斜体
+    .replace(/\*\*\*(.*?)\*\*\*/gim, '<strong><em>$1</em></strong>')
+    .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+    // 代码块
+    .replace(/```[\w]*\n([\s\S]*?)```/gim, '<pre><code>$1</code></pre>')
+    .replace(/`([^`]+)`/gim, '<code>$1</code>')
+    // 链接
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2">$1</a>')
+    // 表格
+    .replace(/\|(.+)\|/gim, (match) => {
+      const cells = match.split('|').filter(c => c.trim())
+      return '<tr>' + cells.map(c => `<td>${c.trim()}</td>`).join('') + '</tr>'
+    })
+    // 无序列表
+    .replace(/^\- (.*$)/gim, '<li>$1</li>')
+    // 有序列表
+    .replace(/^\d+\. (.*$)/gim, '<li>$1</li>')
+
+  // 包装连续的 li 标签为 ul
+  html = html.replace(/(<li>.*<\/li>\n?)+/gim, (match) => `<ul>${match}</ul>`)
+
+  // 包装连续的 tr 标签为 table
+  html = html.replace(/(<tr>.*<\/tr>\n?)+/gim, (match) => `<table>${match}</table>`)
+
+  // 段落处理
+  const lines = html.split('\n')
+  const processed = lines.map(line => {
+    const trimmed = line.trim()
+    if (!trimmed) return ''
+    if (trimmed.startsWith('<')) return line
+    return `<p>${line}</p>`
+  })
+
+  return processed.join('\n')
 }

@@ -2,7 +2,13 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { Navigation } from '@/components/Navigation'
 import { Footer } from '@/components/Footer'
-import { getPayload, isValidLocale, Locale } from '@/lib/payload'
+import {
+  getSiteConfig,
+  getNavigationConfig,
+  getFooterConfig,
+  isValidLocale,
+} from '@/lib/data'
+import type { Locale } from '@/config/types'
 import '../styles.css'
 
 export async function generateStaticParams() {
@@ -22,28 +28,20 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
     return {}
   }
 
-  const payload = await getPayload()
-  const siteSettings = await payload.findGlobal({
-    slug: 'site-settings',
-    locale: locale as Locale,
-  })
-
-  const ogImage = typeof siteSettings?.ogImage === 'object' && siteSettings.ogImage?.url
-    ? siteSettings.ogImage.url
-    : undefined
+  const siteSettings = getSiteConfig(locale as Locale)
 
   return {
     title: {
-      default: siteSettings?.siteName || 'MeowMail',
-      template: `%s | ${siteSettings?.siteName || 'MeowMail'}`,
+      default: siteSettings.siteName,
+      template: `%s | ${siteSettings.siteName}`,
     },
-    description: siteSettings?.siteDescription || '',
+    description: siteSettings.siteDescription,
     openGraph: {
-      siteName: siteSettings?.siteName || 'MeowMail',
+      siteName: siteSettings.siteName,
       locale: locale === 'zh' ? 'zh_CN' : locale === 'ja' ? 'ja_JP' : 'en_US',
       type: 'website',
-      ...(ogImage && {
-        images: [{ url: ogImage, width: 1200, height: 630 }],
+      ...(siteSettings.ogImage && {
+        images: [{ url: siteSettings.ogImage, width: 1200, height: 630 }],
       }),
     },
   }
@@ -56,25 +54,9 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
     notFound()
   }
 
-  const payload = await getPayload()
-
-  // Fetch navigation data
-  const navigation = await payload.findGlobal({
-    slug: 'navigation',
-    locale: locale as Locale,
-  })
-
-  // Fetch footer data
-  const footer = await payload.findGlobal({
-    slug: 'footer',
-    locale: locale as Locale,
-  })
-
-  // Fetch site settings
-  const siteSettings = await payload.findGlobal({
-    slug: 'site-settings',
-    locale: locale as Locale,
-  })
+  const navigation = getNavigationConfig(locale as Locale)
+  const footer = getFooterConfig(locale as Locale)
+  const siteSettings = getSiteConfig(locale as Locale)
 
   const langMap: Record<string, string> = {
     zh: 'zh-CN',
@@ -86,16 +68,16 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
     <html lang={langMap[locale]}>
       <body>
         <Navigation
-          logoText={navigation?.logoText || siteSettings?.siteName || 'MeowMail'}
-          items={navigation?.items || []}
+          logoText={navigation.logoText || siteSettings.siteName}
+          items={navigation.items}
           locale={locale}
         />
         <main className="main-content">{children}</main>
         <Footer
-          columns={footer?.columns || []}
-          socialLinks={footer?.socialLinks || []}
-          copyright={footer?.copyright || ''}
-          bottomLinks={footer?.bottomLinks || []}
+          columns={footer.columns}
+          socialLinks={footer.socialLinks}
+          copyright={footer.copyright}
+          bottomLinks={footer.bottomLinks}
           locale={locale}
         />
       </body>

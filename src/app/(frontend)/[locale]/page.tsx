@@ -1,13 +1,19 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
-import { getPayload, Locale, localeToCurrency, currencySymbols, isValidLocale } from '@/lib/payload'
+import {
+  getHomePageConfig,
+  getPlans,
+  getTestimonials,
+  isValidLocale,
+  localeToCurrency,
+  currencySymbols,
+} from '@/lib/data'
+import type { Locale } from '@/config/types'
 import { notFound } from 'next/navigation'
 import { generateFAQSchema } from '@/lib/seo'
 import { JsonLd } from '@/components/JsonLd'
 import { ScrollAnimator, StaggerContainer } from '@/components/ScrollAnimator'
-
-export const dynamic = 'force-dynamic'
 
 interface PageProps {
   params: Promise<{ locale: string }>
@@ -20,43 +26,25 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return {}
   }
 
-  const payload = await getPayload()
-  const homePage = await payload.findGlobal({
-    slug: 'home-page',
-    locale: locale as Locale,
-  })
-
-  const siteSettings = await payload.findGlobal({
-    slug: 'site-settings',
-    locale: locale as Locale,
-  })
-
-  const seo = homePage?.seo
-  const title = seo?.metaTitle || homePage?.hero?.title || siteSettings?.siteName || 'MeowMail'
-  const description = seo?.metaDescription || siteSettings?.siteDescription || ''
-
-  const ogImage = typeof seo?.ogImage === 'object' && seo.ogImage?.url
-    ? seo.ogImage.url
-    : typeof siteSettings?.ogImage === 'object' && siteSettings.ogImage?.url
-      ? siteSettings.ogImage.url
-      : undefined
+  const homePage = getHomePageConfig(locale as Locale)
+  const seo = homePage.seo
 
   return {
-    title,
-    description,
+    title: seo?.metaTitle || homePage.hero.title,
+    description: seo?.metaDescription || '',
     openGraph: {
-      title,
-      description,
+      title: seo?.metaTitle || homePage.hero.title,
+      description: seo?.metaDescription || '',
       type: 'website',
-      ...(ogImage && {
-        images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
+      ...(seo?.ogImage && {
+        images: [{ url: seo.ogImage, width: 1200, height: 630, alt: homePage.hero.title }],
       }),
     },
     twitter: {
       card: 'summary_large_image',
-      title,
-      description,
-      ...(ogImage && { images: [ogImage] }),
+      title: seo?.metaTitle || homePage.hero.title,
+      description: seo?.metaDescription || '',
+      ...(seo?.ogImage && { images: [seo.ogImage] }),
     },
     ...(seo?.noIndex && {
       robots: { index: false, follow: false },
@@ -71,31 +59,11 @@ export default async function HomePage({ params }: PageProps) {
     notFound()
   }
 
-  const payload = await getPayload()
+  const homePage = getHomePageConfig(locale as Locale)
+  const plans = getPlans(locale as Locale).slice(0, 3)
+  const testimonials = getTestimonials(locale as Locale).slice(0, 3)
 
-  // Fetch home page data
-  const homePage = await payload.findGlobal({
-    slug: 'home-page',
-    locale: locale as Locale,
-  })
-
-  // Fetch plans for preview
-  const { docs: plans } = await payload.find({
-    collection: 'plans',
-    locale: locale as Locale,
-    sort: 'order',
-    limit: 3,
-  })
-
-  // Fetch testimonials
-  const { docs: testimonials } = await payload.find({
-    collection: 'testimonials',
-    locale: locale as Locale,
-    sort: 'order',
-    limit: 3,
-  })
-
-  const currency = localeToCurrency[locale]
+  const currency = localeToCurrency[locale as Locale]
   const currencySymbol = currencySymbols[currency]
 
   const t = {
@@ -135,10 +103,10 @@ export default async function HomePage({ params }: PageProps) {
       trustedBy: '世界中の企業から信頼',
       learnMore: '詳しく見る',
     },
-  }[locale]
+  }[locale as Locale]
 
   // Generate FAQ Schema JSON-LD
-  const faqSchema = generateFAQSchema(homePage?.seo?.faq as Array<{ question: string; answer: string }> | null)
+  const faqSchema = generateFAQSchema(homePage.seo?.faq || null)
 
   return (
     <div className="home-page">
@@ -147,10 +115,10 @@ export default async function HomePage({ params }: PageProps) {
 
       {/* Hero Section */}
       <section className="hero">
-        {homePage?.hero?.backgroundImage && typeof homePage.hero.backgroundImage === 'object' && (
+        {homePage.hero.backgroundImage && (
           <div className="hero-bg">
             <Image
-              src={homePage.hero.backgroundImage.url || ''}
+              src={homePage.hero.backgroundImage}
               alt=""
               fill
               style={{ objectFit: 'cover' }}
@@ -159,16 +127,16 @@ export default async function HomePage({ params }: PageProps) {
           </div>
         )}
         <div className="hero-content">
-          <h1>{homePage?.hero?.title || 'MeowMail'}</h1>
-          <p className="hero-subtitle">{homePage?.hero?.subtitle}</p>
+          <h1>{homePage.hero.title}</h1>
+          <p className="hero-subtitle">{homePage.hero.subtitle}</p>
           <div className="hero-ctas">
-            {homePage?.hero?.primaryCTA?.text && (
-              <Link href={homePage.hero.primaryCTA.link || '#'} className="btn btn-primary btn-large">
+            {homePage.hero.primaryCTA && (
+              <Link href={homePage.hero.primaryCTA.link} className="btn btn-primary btn-large">
                 {homePage.hero.primaryCTA.text}
               </Link>
             )}
-            {homePage?.hero?.secondaryCTA?.text && (
-              <Link href={homePage.hero.secondaryCTA.link || '#'} className="btn btn-secondary btn-large">
+            {homePage.hero.secondaryCTA && (
+              <Link href={homePage.hero.secondaryCTA.link} className="btn btn-secondary btn-large">
                 {homePage.hero.secondaryCTA.text} →
               </Link>
             )}
@@ -177,7 +145,7 @@ export default async function HomePage({ params }: PageProps) {
       </section>
 
       {/* Features Section - Bento Grid Style */}
-      {homePage?.features && homePage.features.length > 0 && (
+      {homePage.features && homePage.features.length > 0 && (
         <section className="features">
           <div className="container">
             <StaggerContainer className="features-grid" staggerDelay={100}>
@@ -196,7 +164,7 @@ export default async function HomePage({ params }: PageProps) {
       )}
 
       {/* Stats Section - Dark & Bold */}
-      {homePage?.stats && homePage.stats.length > 0 && (
+      {homePage.stats && homePage.stats.length > 0 && (
         <section className="stats">
           <div className="container">
             <StaggerContainer className="stats-grid" staggerDelay={150}>
@@ -221,8 +189,8 @@ export default async function HomePage({ params }: PageProps) {
               <h2>{t.plansTitle}</h2>
             </ScrollAnimator>
             <StaggerContainer className="plans-grid" staggerDelay={100}>
-              {plans.map((plan: any) => {
-                const price = plan.pricing?.[currency]
+              {plans.map((plan) => {
+                const price = plan.pricing[currency as keyof typeof plan.pricing]
                 return (
                   <ScrollAnimator key={plan.id}>
                     <div className={`plan-card ${plan.isRecommended ? 'recommended' : ''}`}>
@@ -259,7 +227,7 @@ export default async function HomePage({ params }: PageProps) {
       )}
 
       {/* Client Logos */}
-      {homePage?.clientLogos && homePage.clientLogos.length > 0 && (
+      {homePage.clientLogos && homePage.clientLogos.length > 0 && (
         <section className="client-logos">
           <div className="container">
             <ScrollAnimator>
@@ -269,9 +237,9 @@ export default async function HomePage({ params }: PageProps) {
               {homePage.clientLogos.map((client, index) => (
                 <ScrollAnimator key={index}>
                   <div className="logo-item">
-                    {typeof client.logo === 'object' && client.logo?.url && (
+                    {client.logo && (
                       <Image
-                        src={client.logo.url}
+                        src={client.logo}
                         alt={client.name || ''}
                         width={120}
                         height={40}
@@ -294,7 +262,7 @@ export default async function HomePage({ params }: PageProps) {
               <h2>{t.testimonialsTitle}</h2>
             </ScrollAnimator>
             <StaggerContainer className="testimonials-grid" staggerDelay={150}>
-              {testimonials.map((testimonial: any) => (
+              {testimonials.map((testimonial) => (
                 <ScrollAnimator key={testimonial.id}>
                   <div className="testimonial-card">
                     <div className="testimonial-rating">
@@ -303,9 +271,9 @@ export default async function HomePage({ params }: PageProps) {
                     </div>
                     <p className="testimonial-content">&ldquo;{testimonial.content}&rdquo;</p>
                     <div className="testimonial-author">
-                      {typeof testimonial.avatar === 'object' && testimonial.avatar?.url && (
+                      {testimonial.avatar && (
                         <Image
-                          src={testimonial.avatar.url}
+                          src={testimonial.avatar}
                           alt={testimonial.userName}
                           width={56}
                           height={56}
