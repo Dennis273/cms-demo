@@ -1,20 +1,37 @@
-import { test, expect, Page } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 
 test.describe('Frontend', () => {
-  let page: Page
-
-  test.beforeAll(async ({ browser }, testInfo) => {
-    const context = await browser.newContext()
-    page = await context.newPage()
+  test('homepage loads with correct title', async ({ page }) => {
+    await page.goto('http://localhost:3000/en')
+    await expect(page).toHaveTitle(/CloudFlow/)
   })
 
-  test('can go on homepage', async ({ page }) => {
-    await page.goto('http://localhost:3000')
+  test('homepage has hero section', async ({ page }) => {
+    await page.goto('http://localhost:3000/en')
+    const heading = page.locator('h1').first()
+    await expect(heading).toBeVisible()
+  })
 
-    await expect(page).toHaveTitle(/Payload Blank Template/)
+  test('plans page loads', async ({ page }) => {
+    await page.goto('http://localhost:3000/en/plans')
+    await expect(page).toHaveTitle(/Plans/)
+  })
 
-    const headging = page.locator('h1').first()
+  test('docs page loads', async ({ page }) => {
+    await page.goto('http://localhost:3000/en/docs')
+    await expect(page).toHaveTitle(/Docs/)
+  })
 
-    await expect(headging).toHaveText('Welcome to your new project.')
+  test('showcase page loads', async ({ page }) => {
+    await page.goto('http://localhost:3000/en/showcase')
+    await expect(page).toHaveTitle(/Customer/)
+  })
+
+  test('locale switching works', async ({ page }) => {
+    await page.goto('http://localhost:3000/zh')
+    await expect(page).toHaveTitle(/CloudFlow/)
+
+    await page.goto('http://localhost:3000/ja')
+    await expect(page).toHaveTitle(/CloudFlow/)
   })
 })

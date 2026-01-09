@@ -1,6 +1,12 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { getPayload, Locale, isValidLocale } from '@/lib/payload'
+import {
+  getDocsPageConfig,
+  getDocCategories,
+  getDocs,
+  isValidLocale,
+} from '@/lib/data'
+import type { Locale } from '@/config/types'
 import { notFound } from 'next/navigation'
 import { generateFAQSchema } from '@/lib/seo'
 import { JsonLd } from '@/components/JsonLd'
@@ -16,44 +22,25 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return {}
   }
 
-  const payload = await getPayload()
-  const docsPage = await payload.findGlobal({
-    slug: 'docs-page',
-    locale: locale as Locale,
-  })
-
-  const siteSettings = await payload.findGlobal({
-    slug: 'site-settings',
-    locale: locale as Locale,
-  })
-
-  const seo = docsPage?.seo
-  const fallbackTitles = { zh: '帮助文档', en: 'Documentation', ja: 'ドキュメント' }
-  const title = seo?.metaTitle || docsPage?.title || fallbackTitles[locale as keyof typeof fallbackTitles]
-  const description = seo?.metaDescription || docsPage?.subtitle || ''
-
-  const ogImage = typeof seo?.ogImage === 'object' && seo.ogImage?.url
-    ? seo.ogImage.url
-    : typeof siteSettings?.ogImage === 'object' && siteSettings.ogImage?.url
-      ? siteSettings.ogImage.url
-      : undefined
+  const docsPage = getDocsPageConfig(locale as Locale)
+  const seo = docsPage.seo
 
   return {
-    title,
-    description,
+    title: seo?.metaTitle || docsPage.title,
+    description: seo?.metaDescription || docsPage.subtitle,
     openGraph: {
-      title,
-      description,
+      title: seo?.metaTitle || docsPage.title,
+      description: seo?.metaDescription || docsPage.subtitle,
       type: 'website',
-      ...(ogImage && {
-        images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
+      ...(seo?.ogImage && {
+        images: [{ url: seo.ogImage, width: 1200, height: 630, alt: docsPage.title }],
       }),
     },
     twitter: {
       card: 'summary_large_image',
-      title,
-      description,
-      ...(ogImage && { images: [ogImage] }),
+      title: seo?.metaTitle || docsPage.title,
+      description: seo?.metaDescription || docsPage.subtitle,
+      ...(seo?.ogImage && { images: [seo.ogImage] }),
     },
     ...(seo?.noIndex && {
       robots: { index: false, follow: false },
@@ -68,60 +55,29 @@ export default async function DocsPage({ params }: PageProps) {
     notFound()
   }
 
-  const payload = await getPayload()
-
-  // Fetch docs page settings
-  const docsPage = await payload.findGlobal({
-    slug: 'docs-page',
-    locale: locale as Locale,
-  })
-
-  // Fetch categories
-  const { docs: categories } = await payload.find({
-    collection: 'doc-categories',
-    locale: locale as Locale,
-    sort: 'order',
-  })
-
-  // Fetch all docs
-  const { docs: allDocs } = await payload.find({
-    collection: 'docs',
-    locale: locale as Locale,
-    sort: 'order',
-    limit: 100,
-  })
+  const docsPage = getDocsPageConfig(locale as Locale)
+  const categories = getDocCategories(locale as Locale)
+  const allDocs = getDocs(locale as Locale)
 
   // Generate FAQ Schema JSON-LD
-  const faqSchema = generateFAQSchema(docsPage?.seo?.faq as Array<{ question: string; answer: string }> | null)
+  const faqSchema = generateFAQSchema(docsPage.seo?.faq || null)
 
   const t = {
     zh: {
-      title: '帮助文档',
-      subtitle: '了解如何使用喵喵企业邮箱',
-      searchPlaceholder: '搜索文档...',
       articles: '篇文章',
     },
     en: {
-      title: 'Documentation',
-      subtitle: 'Learn how to use MeowMail',
-      searchPlaceholder: 'Search docs...',
       articles: 'articles',
     },
     ja: {
-      title: 'ドキュメント',
-      subtitle: 'MeowMailの使い方を学ぶ',
-      searchPlaceholder: 'ドキュメントを検索...',
       articles: '記事',
     },
-  }[locale]
+  }[locale as Locale]
 
   // Group docs by category
-  const docsByCategory: Record<string, any[]> = {}
-  categories.forEach((cat: any) => {
-    docsByCategory[cat.id] = allDocs.filter(
-      (doc: any) =>
-        (typeof doc.category === 'object' ? doc.category?.id : doc.category) === cat.id,
-    )
+  const docsByCategory: Record<string, typeof allDocs> = {}
+  categories.forEach((cat) => {
+    docsByCategory[cat.slug] = allDocs.filter((doc) => doc.categorySlug === cat.slug)
   })
 
   return (
@@ -131,13 +87,13 @@ export default async function DocsPage({ params }: PageProps) {
 
       <div className="container">
         <header className="page-header">
-          <h1>{docsPage?.title || t.title}</h1>
-          <p>{docsPage?.subtitle || t.subtitle}</p>
+          <h1>{docsPage.title}</h1>
+          <p>{docsPage.subtitle}</p>
         </header>
 
         <div className="docs-categories">
-          {categories.map((category: any) => {
-            const categoryDocs = docsByCategory[category.id] || []
+          {categories.map((category) => {
+            const categoryDocs = docsByCategory[category.slug] || []
             return (
               <div key={category.id} className="category-card">
                 <Link href={`/${locale}/docs/${category.slug}`} className="category-header">
@@ -152,7 +108,7 @@ export default async function DocsPage({ params }: PageProps) {
                 </Link>
                 {categoryDocs.length > 0 && (
                   <ul className="category-docs">
-                    {categoryDocs.slice(0, 3).map((doc: any) => (
+                    {categoryDocs.slice(0, 3).map((doc) => (
                       <li key={doc.id}>
                         <Link href={`/${locale}/docs/${category.slug}/${doc.slug}`}>
                           {doc.title}
